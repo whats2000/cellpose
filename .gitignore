@@ -132,3 +132,7 @@ raw_data
 # IDE
 .idea
 .vscode
+data_statistics.json
+
+# Document
+project_docs/*.pdf
