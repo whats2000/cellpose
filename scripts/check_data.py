@@ -2,11 +2,10 @@
 資料檢查腳本 - 檢查骨髓幹細胞影像資料的完整性與統計
 """
 
-import os
-import sys
-from pathlib import Path
-from collections import defaultdict
 import json
+import sys
+from collections import defaultdict
+from pathlib import Path
 
 
 def print_header(text):
