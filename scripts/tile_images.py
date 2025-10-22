@@ -290,15 +290,21 @@ def process_unlabeled_data(
             list(input_dir.rglob("*.tiff"))
         )
         
-        # 過濾掉廢棄資料夾中的影像
-        excluded_folders = ["AI照片過密", "其他"]
+        # 過濾規則
+        excluded_folders = ["AI照片過密", "其他"]  # 廢棄資料夾
+        excluded_patterns = ["Snapshot"]  # 排除 Snapshot 預覽影像
+        
         images = [
             img for img in all_images 
             if not any(excluded in str(img) for excluded in excluded_folders)
+            and not any(pattern in img.name for pattern in excluded_patterns)
         ]
         
-        if len(all_images) > len(images):
-            print(f"  ⚠️  已排除 {len(all_images) - len(images)} 張影像（來自廢棄資料夾: {', '.join(excluded_folders)}）")
+        excluded_count = len(all_images) - len(images)
+        if excluded_count > 0:
+            print(f"  ⚠️  已排除 {excluded_count} 張影像")
+            print(f"     - 廢棄資料夾: {', '.join(excluded_folders)}")
+            print(f"     - 排除檔案類型: {', '.join(excluded_patterns)}")
         
         if not images:
             print(f"\n⚠️  {subdir_name} 中沒有找到影像")
