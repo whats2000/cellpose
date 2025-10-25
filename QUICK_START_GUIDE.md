@@ -1,31 +1,31 @@
-# 骨髓幹細胞年齡分析：快速開始指南
+# Bone Marrow Stem Cell Age Analysis: Quick Start Guide
 
-## 🚀 快速開始 (5分鐘)
+## 🚀 Quick Start (5 minutes)
 
-### 1. 環境準備
+### 1. Environment Setup
 
 ```bash
-# 建立 Python 環境
+# Create Python environment
 conda create -n cellpose-active python=3.10
 conda activate cellpose-active
 
-# 安裝 Cellpose-SAM
+# Install Cellpose-SAM
 pip install cellpose[gui]
 
-# 安裝其他依賴
+# Install other dependencies
 pip install scikit-learn pandas matplotlib seaborn tqdm
 ```
 
-### 2. 檢查資料
+### 2. Check Data
 
 ```bash
-# 執行資料檢查腳本
+# Run data checking script
 python scripts/check_data.py
 ```
 
-### 3. 切片資料
+### 3. Tile Data
 
 ```bash
-# 執行顯微鏡切片
+# Run microscope tiling
 python scripts/tile_images.py
 ```

@@ -1,5 +1,5 @@
 """
-資料檢查腳本 - 檢查骨髓幹細胞影像資料的完整性與統計
+Data checking script - Check integrity and statistics of bone marrow stem cell image data
 """
 
 import json
@@ -9,26 +9,26 @@ from pathlib import Path
 
 
 def print_header(text):
-    """列印標題"""
+    """Print header"""
     print("\n" + "="*60)
     print(f"  {text}")
     print("="*60)
 
 
 def print_section(text):
-    """列印區段"""
+    """Print section"""
     print(f"\n{text}")
     print("-"*60)
 
 
 def check_labeled_data(base_path):
-    """檢查已標記資料 (Roboflow)"""
-    print_section("📋 已標記資料 (Roboflow COCO 格式)")
+    """Check labeled data (Roboflow)"""
+    print_section("📋 Labeled data (Roboflow COCO format)")
     
     labeled_path = base_path / "05 輔仁大學Roboflow"
     
     if not labeled_path.exists():
-        print(f"❌ 找不到資料夾: {labeled_path}")
+        print(f"❌ Directory not found: {labeled_path}")
         return {}
     
     stats = {}
@@ -36,13 +36,13 @@ def check_labeled_data(base_path):
     for split in ["train", "valid", "test"]:
         split_dir = labeled_path / split
         if not split_dir.exists():
-            print(f"⚠️  {split} 資料夾不存在")
+            print(f"⚠️  {split} directory does not exist")
             continue
         
-        # 統計影像
+        # Count images
         images = list(split_dir.glob("*.jpg")) + list(split_dir.glob("*.png"))
         
-        # 檢查標註檔
+        # Check annotation file
         anno_file = split_dir / "_annotations.coco.json"
         has_annotations = anno_file.exists()
         
@@ -53,10 +53,10 @@ def check_labeled_data(base_path):
                     coco_data = json.load(f)
                     n_annotations = len(coco_data.get('annotations', []))
             except Exception as e:
-                print(f"⚠️  無法讀取標註檔: {e}")
+                print(f"⚠️  Unable to read annotation file: {e}")
         
-        print(f"  {split:6s}: {len(images):4d} 張影像, {n_annotations:5d} 個標註", 
-              "✅" if has_annotations else "❌ 缺少標註檔")
+        print(f"  {split:6s}: {len(images):4d} images, {n_annotations:5d} annotations", 
+              "✅" if has_annotations else "❌ Missing annotation file")
         
         stats[split] = {
             'n_images': len(images),
@@ -67,19 +67,19 @@ def check_labeled_data(base_path):
     total_images = sum(s['n_images'] for s in stats.values())
     total_annotations = sum(s['n_annotations'] for s in stats.values())
     
-    print(f"\n  總計: {total_images} 張影像, {total_annotations} 個標註")
+    print(f"\n  Total: {total_images} images, {total_annotations} annotations")
     
     return stats
 
 
 def check_unlabeled_data(base_path):
-    """檢查未標記資料"""
-    print_section("📦 未標記資料 (IX83 全通量細胞照片)")
+    """Check unlabeled data"""
+    print_section("📦 Unlabeled data (IX83 full-field cell photos)")
     
     unlabeled_path = base_path / "02 IX83 全通量細胞照片"
     
     if not unlabeled_path.exists():
-        print(f"❌ 找不到資料夾: {unlabeled_path}")
+        print(f"❌ Directory not found: {unlabeled_path}")
         return {}
     
     stats = {}
@@ -87,32 +87,32 @@ def check_unlabeled_data(base_path):
     for subdir_name in ["Adult MSC", "Pediatric MSC"]:
         subdir = unlabeled_path / subdir_name
         if not subdir.exists():
-            print(f"⚠️  {subdir_name} 資料夾不存在")
+            print(f"⚠️  {subdir_name} directory does not exist")
             continue
         
-        # 統計影像（遞迴搜尋）
+        # Count images (recursive search)
         images = list(subdir.rglob("*.jpg")) + list(subdir.rglob("*.png")) + \
                  list(subdir.rglob("*.tif")) + list(subdir.rglob("*.tiff"))
         
-        # 按日期資料夾分組
+        # Group by date folders
         date_folders = defaultdict(int)
         for img in images:
-            # 取得最近的父資料夾名稱
+            # Get the nearest parent folder name
             parent = img.parent.name
             date_folders[parent] += 1
         
         print(f"\n  {subdir_name}:")
-        print(f"    總影像數: {len(images)}")
-        print(f"    日期批次數: {len(date_folders)}")
+        print(f"    Total images: {len(images)}")
+        print(f"    Date batches: {len(date_folders)}")
         
-        # 顯示前幾個批次
+        # Display top batches
         sorted_folders = sorted(date_folders.items(), key=lambda x: x[1], reverse=True)
-        print(f"    主要批次:")
+        print(f"    Main batches:")
         for folder, count in sorted_folders[:5]:
-            print(f"      - {folder}: {count} 張")
+            print(f"      - {folder}: {count} images")
         
         if len(sorted_folders) > 5:
-            print(f"      ... 還有 {len(sorted_folders) - 5} 個批次")
+            print(f"      ... and {len(sorted_folders) - 5} more batches")
         
         stats[subdir_name] = {
             'n_images': len(images),
@@ -121,23 +121,23 @@ def check_unlabeled_data(base_path):
         }
     
     total_unlabeled = sum(s['n_images'] for s in stats.values())
-    print(f"\n  總計: {total_unlabeled} 張未標記影像")
+    print(f"\n  Total: {total_unlabeled} unlabeled images")
     
     return stats
 
 
 def check_workspace():
-    """檢查工作目錄"""
-    print_section("🔧 工作目錄狀態")
+    """Check workspace directory"""
+    print_section("🔧 Workspace status")
     
     workspace = Path("active_learning_workspace")
     
     if not workspace.exists():
-        print(f"  ℹ️  工作目錄尚未建立: {workspace}")
-        print(f"     執行主動學習系統時會自動建立")
+        print(f"  ℹ️  Workspace directory not yet created: {workspace}")
+        print(f"     Will be created automatically when running active learning system")
         return
     
-    # 檢查子目錄
+    # Check subdirectories
     subdirs = ["models", "annotations", "predictions", "logs"]
     for subdir in subdirs:
         subdir_path = workspace / subdir
@@ -145,23 +145,23 @@ def check_workspace():
         status = "✅" if exists else "❌"
         print(f"  {status} {subdir}/")
     
-    # 檢查迭代目錄
+    # Check iteration directories
     iterations = sorted(workspace.glob("iteration_*"))
     if iterations:
-        print(f"\n  已完成迭代: {len(iterations)}")
-        for iter_dir in iterations[-3:]:  # 顯示最近3個
+        print(f"\n  Completed iterations: {len(iterations)}")
+        for iter_dir in iterations[-3:]:  # Show last 3
             print(f"    - {iter_dir.name}")
 
 
 def check_environment():
-    """檢查 Python 環境"""
-    print_section("🐍 Python 環境檢查")
+    """Check Python environment"""
+    print_section("🐍 Python environment check")
     
-    # Python 版本
+    # Python version
     python_version = sys.version.split()[0]
-    print(f"  Python 版本: {python_version}")
+    print(f"  Python version: {python_version}")
     
-    # 檢查套件
+    # Check packages
     required_packages = [
         "cellpose",
         "torch",
@@ -172,7 +172,7 @@ def check_environment():
         "matplotlib"
     ]
     
-    print("\n  必要套件:")
+    print("\n  Required packages:")
     for package in required_packages:
         try:
             if package == "cv2":
@@ -187,76 +187,76 @@ def check_environment():
             
             print(f"    ✅ {package:12s} (v{version})")
         except ImportError:
-            print(f"    ❌ {package:12s} (未安裝)")
+            print(f"    ❌ {package:12s} (not installed)")
     
-    # GPU 檢查
-    print("\n  GPU 狀態:")
+    # GPU check
+    print("\n  GPU status:")
     try:
         import torch
         if torch.cuda.is_available():
-            print(f"    ✅ CUDA 可用")
-            print(f"       裝置: {torch.cuda.get_device_name(0)}")
-            print(f"       記憶體: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+            print(f"    ✅ CUDA available")
+            print(f"       Device: {torch.cuda.get_device_name(0)}")
+            print(f"       Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
         else:
-            print(f"    ⚠️  CUDA 不可用 (將使用 CPU，訓練會較慢)")
+            print(f"    ⚠️  CUDA not available (will use CPU, training will be slower)")
     except Exception as e:
-        print(f"    ❌ 無法檢查 GPU: {e}")
+        print(f"    ❌ Unable to check GPU: {e}")
 
 
 def estimate_resources():
-    """估算資源需求"""
-    print_section("📊 資源需求估算")
+    """Estimate resource requirements"""
+    print_section("📊 Resource requirement estimation")
     
-    print("  基於當前資料規模的估算:")
+    print("  Estimation based on current data scale:")
     print()
-    print("  訓練資源:")
-    print("    - GPU 記憶體: 建議 >= 8GB")
-    print("    - RAM: 建議 >= 32GB")
-    print("    - 儲存空間: 建議 >= 500GB")
+    print("  Training resources:")
+    print("    - GPU memory: Recommended >= 8GB")
+    print("    - RAM: Recommended >= 32GB")
+    print("    - Storage space: Recommended >= 500GB")
     print()
-    print("  時間估算 (10 輪迭代):")
-    print("    - 每輪標註: ~10-15 小時 (100 張影像)")
-    print("    - 每輪訓練: ~2-4 小時 (視 GPU 而定)")
-    print("    - 總計約: 120-190 小時 (約 3-4 個月)")
+    print("  Time estimation (10 rounds of iteration):")
+    print("    - Annotation per round: ~10-15 hours (100 images)")
+    print("    - Training per round: ~2-4 hours (depends on GPU)")
+    print("    - Total approx: 120-190 hours (about 3-4 months)")
     print()
-    print("  人力需求:")
-    print("    - AI 工程師: 1-2 人")
-    print("    - 生物醫學專家: 1-2 人 (品質控制)")
-    print("    - 標註人員: 2-3 人")
+    print("  Personnel requirements:")
+    print("    - AI engineers: 1-2 people")
+    print("    - Biomedical experts: 1-2 people (quality control)")
+    print("    - Annotators: 2-3 people")
 
 
 def generate_summary_report(labeled_stats, unlabeled_stats):
-    """生成摘要報告"""
-    print_header("📈 資料摘要報告")
+    """Generate summary report"""
+    print_header("📈 Data summary report")
     
     total_labeled = sum(s['n_images'] for s in labeled_stats.values())
     total_unlabeled = sum(s['n_images'] for s in unlabeled_stats.values())
     
     print(f"""
-  已標記資料: {total_labeled:5d} 張影像
-  未標記資料: {total_unlabeled:5d} 張影像
+  Labeled data: {total_labeled:5d} images
+  Unlabeled data: {total_unlabeled:5d} images
   
-  標記/未標記比例: 1:{total_unlabeled/max(total_labeled, 1):.0f}
+  Labeled/Unlabeled ratio: 1:{total_unlabeled/max(total_labeled, 1):.0f}
   
-  建議:
+  Recommendations:
   """)
     
     if total_labeled < 50:
-        print("  ⚠️  已標記資料較少 (<50)，建議:")
-        print("     1. 先手動標註更多資料 (至少 50-100 張)")
-        print("     2. 或直接開始主動學習，但初始效能可能較低")
+        print("  ⚠️  Labeled data is low (<50), suggestions:")
+        print("     1. Manually annotate more data first (at least 50-100 images)")
+        print("     2. Or start active learning directly, but initial performance may be lower")
     elif total_labeled < 200:
-        print("  ✅ 已標記資料適中，可以開始主動學習")
+        print("  ✅ Labeled data is moderate, can start active learning")
     else:
-        print("  ✅ 已標記資料充足，適合訓練")
+        print("  ✅ Labeled data is sufficient for training")
     
     if total_unlabeled > 10000:
-        print(f"\n  ℹ️  未標記資料量龐大 ({total_unlabeled} 張)")
-        print("     建議先對資料進行採樣或分批處理")
+        print(f"\n  ℹ️  Unlabeled data volume is large ({total_unlabeled} images)")
+        print("     Consider sampling or batch processing")
 
 
 def save_stats_to_file(labeled_stats, unlabeled_stats):
-    """儲存統計資料到檔案"""
+    """Save statistics to file"""
     stats = {
         'labeled': labeled_stats,
         'unlabeled': unlabeled_stats,
@@ -267,22 +267,22 @@ def save_stats_to_file(labeled_stats, unlabeled_stats):
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(stats, f, indent=2, ensure_ascii=False)
     
-    print(f"\n💾 統計資料已儲存至: {output_file}")
+    print(f"\n💾 Statistics saved to: {output_file}")
 
 
 def main():
-    """主程式"""
-    print_header("骨髓幹細胞影像資料檢查工具")
+    """Main program"""
+    print_header("Bone marrow stem cell image data checking tool")
     
-    # 設定基礎路徑
+    # Set base path
     base_path = Path("raw_data/01 AI 分析細胞照片")
     
     if not base_path.exists():
-        print(f"\n❌ 找不到資料根目錄: {base_path}")
-        print(f"   請確認您在正確的專案目錄下執行此腳本")
+        print(f"\n❌ Root data directory not found: {base_path}")
+        print(f"   Please ensure you are running this script in the correct project directory")
         return
     
-    # 執行各項檢查
+    # Execute checks
     labeled_stats = check_labeled_data(base_path)
     unlabeled_stats = check_unlabeled_data(base_path)
     check_workspace()
@@ -290,22 +290,22 @@ def main():
     estimate_resources()
     generate_summary_report(labeled_stats, unlabeled_stats)
     
-    # 儲存統計
+    # Save statistics
     try:
         save_stats_to_file(labeled_stats, unlabeled_stats)
     except Exception as e:
-        print(f"⚠️  無法儲存統計資料: {e}")
+        print(f"⚠️  Unable to save statistics: {e}")
     
     print("\n" + "="*60)
-    print("  檢查完成！")
+    print("  Check completed!")
     print("="*60 + "\n")
     
-    # 下一步建議
-    print("📋 下一步建議:")
-    print("  1. 如果環境檢查有缺少的套件，請先安裝")
-    print("  2. 執行 scripts/tile_large_images.py 處理大型影像")
-    print("  3. 執行 scripts/convert_coco_to_cellpose.py 轉換格式")
-    print("  4. 執行 src/active_learning_framework.py 開始訓練\n")
+    # Next steps suggestions
+    print("📋 Next steps suggestions:")
+    print("  1. If environment check shows missing packages, please install them first")
+    print("  2. Run scripts/tile_large_images.py to process large images")
+    print("  3. Run scripts/convert_coco_to_cellpose.py to convert format")
+    print("  4. Run src/active_learning_framework.py to start training\n")
 
 
 if __name__ == "__main__":
